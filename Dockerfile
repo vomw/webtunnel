@@ -1,4 +1,4 @@
-FROM golang:1.24-bookworm as builder
+FROM golang:1.26-trixie as builder
 
 ADD . /webtunnel
 
@@ -8,7 +8,7 @@ WORKDIR /webtunnel
 
 RUN go build -ldflags="-s -w" -o "build/server" gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/webtunnel/main/server
 
-FROM containers.torproject.org/tpo/tpa/base-images/debian:bookworm
+FROM containers.torproject.org/tpo/tpa/base-images/debian:trixie
 
 COPY --from=builder /webtunnel/build/server /usr/bin/webtunnel-server
 
@@ -23,12 +23,12 @@ RUN apt-get update && apt-get install -y \
 
 # See: <https://2019.www.torproject.org/docs/debian.html.en>
 RUN curl https://deb.torproject.org/torproject.org/A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89.asc | gpg --import
-RUN gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | apt-key add -
+RUN gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | gpg --dearmor | tee /usr/share/keyrings/deb.torproject.org-keyring.gpg >/dev/null
 
 RUN groupadd -g 101 debian-tor
 RUN useradd --system -u 101 -g 101 -s /usr/bin/nologin -d /var/lib/tor debian-tor
 
-RUN printf "deb https://deb.torproject.org/torproject.org bookworm main\n" >> /etc/apt/sources.list.d/tor.list
+RUN printf "deb [signed-by=/usr/share/keyrings/deb.torproject.org-keyring.gpg] https://deb.torproject.org/torproject.org trixie main\n" >> /etc/apt/sources.list.d/tor.list
 
 # Install remaining dependencies.
 RUN apt-get update && apt-get install -y \
