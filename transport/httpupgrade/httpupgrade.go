@@ -11,15 +11,19 @@ import (
 type Config struct {
 	Path string
 	Host string
+
+	TrustedReverseProxyHops int
 }
 
 func NewHTTPUpgradeTransport(config *Config) (Transport, error) {
-	return Transport{path: config.Path, host: config.Host}, nil
+	return Transport{path: config.Path, host: config.Host, trustedReverseProxyHops: config.TrustedReverseProxyHops}, nil
 }
 
 type Transport struct {
 	path string
 	host string
+
+	trustedReverseProxyHops int
 }
 
 func (t Transport) Client(conn net.Conn) (net.Conn, error) {
@@ -79,8 +83,13 @@ func (t Transport) Server(conn net.Conn) (net.Conn, error) {
 
 	var remoteAddr net.Addr
 	forwardedForHeader := req.Header.Get("X-Forwarded-For")
-	if forwardedForHeader != "" {
-		forwardedForHeader = strings.Split(forwardedForHeader, ",")[0]
+	if forwardedForHeader != "" && t.trustedReverseProxyHops != 0 {
+		forwardedForHeaderIPs := strings.Split(forwardedForHeader, ",")
+		position := len(forwardedForHeaderIPs) - t.trustedReverseProxyHops
+		if position < 0 {
+			position = 0
+		}
+		forwardedForHeader = forwardedForHeaderIPs[position]
 		remoteAddr = &net.TCPAddr{
 			IP:   net.ParseIP(forwardedForHeader),
 			Port: 60000,

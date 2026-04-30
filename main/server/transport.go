@@ -2,6 +2,8 @@ package main
 
 import (
 	"net"
+	"os"
+	"strconv"
 
 	"gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/webtunnel/transport/httpupgrade"
 )
@@ -19,7 +21,17 @@ func NewWebTunnelServerTransport(config *ServerConfig) (Transport, error) {
 }
 
 func (t Transport) Accept(conn net.Conn) (net.Conn, error) {
-	config := &httpupgrade.Config{}
+	val, ok := os.LookupEnv("WEBTUNNEL_TRUSTED_REVERSE_PROXY_HOPS")
+	var trustedHop = 1
+	if ok {
+		trustedHopParsed, err := strconv.ParseInt(val, 10, 64)
+		if err == nil {
+			trustedHop = int(trustedHopParsed)
+		}
+	}
+	config := &httpupgrade.Config{
+		TrustedReverseProxyHops: trustedHop,
+	}
 	if httpUpgradeTransport, err := httpupgrade.NewHTTPUpgradeTransport(config); err != nil {
 		return nil, err
 	} else {
