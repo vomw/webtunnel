@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"strconv"
+
+	pt "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/goptlib"
 
 	"gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/webtunnel/transport/httpupgrade"
 )
@@ -27,6 +30,8 @@ func (t Transport) Accept(conn net.Conn) (net.Conn, error) {
 		trustedHopParsed, err := strconv.ParseInt(val, 10, 64)
 		if err == nil {
 			trustedHop = int(trustedHopParsed)
+		} else {
+			pt.Log(pt.LogSeverityError, fmt.Sprintf("Error parsing trusted hop value: %s with error %v", val, err))
 		}
 	}
 	config := &httpupgrade.Config{

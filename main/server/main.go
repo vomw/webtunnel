@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/webtunnel/common/syntheticIP"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,9 +12,10 @@ import (
 	"sync"
 	"syscall"
 
-	"gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/webtunnel"
-
 	pt "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/goptlib"
+
+	"gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/webtunnel"
+	"gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/webtunnel/common/syntheticIP"
 )
 
 const ptMethodName = "webtunnel"

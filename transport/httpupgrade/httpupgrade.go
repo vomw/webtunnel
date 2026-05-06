@@ -3,9 +3,12 @@ package httpupgrade
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
+
+	pt "gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/goptlib"
 )
 
 type Config struct {
@@ -87,11 +90,21 @@ func (t Transport) Server(conn net.Conn) (net.Conn, error) {
 		forwardedForHeaderIPs := strings.Split(forwardedForHeader, ",")
 		position := len(forwardedForHeaderIPs) - t.trustedReverseProxyHops
 		if position < 0 {
+			pt.Log(pt.LogSeverityWarning,
+				fmt.Sprintf("tried to skip %d X-FORWARDED-FOR addresses, but there were only %d. Using requester origin IP as client address instead.",
+					t.trustedReverseProxyHops, len(forwardedForHeaderIPs)))
 			position = 0
 		}
 		forwardedForHeader = forwardedForHeaderIPs[position]
+		parsedClientIP := net.ParseIP(forwardedForHeader)
+		if parsedClientIP == nil {
+			pt.Log(pt.LogSeverityWarning, "unable to parse client IP address in X-Forwarded-For header")
+		}
+		if parsedClientIP.IsLoopback() || parsedClientIP.IsUnspecified() || parsedClientIP.IsMulticast() || parsedClientIP.IsLinkLocalUnicast() || parsedClientIP.IsPrivate() {
+			pt.Log(pt.LogSeverityWarning, "unexpected internal address in X-Forwarded-For header")
+		}
 		remoteAddr = &net.TCPAddr{
-			IP:   net.ParseIP(forwardedForHeader),
+			IP:   parsedClientIP,
 			Port: 60000,
 		}
 	}
