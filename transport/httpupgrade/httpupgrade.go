@@ -96,7 +96,8 @@ func (t Transport) Server(conn net.Conn) (net.Conn, error) {
 			position = 0
 		}
 		forwardedForHeader = forwardedForHeaderIPs[position]
-		parsedClientIP := net.ParseIP(forwardedForHeader)
+		forwardedForHeaderNoSpace := strings.TrimSpace(forwardedForHeader)
+		parsedClientIP := net.ParseIP(forwardedForHeaderNoSpace)
 		if parsedClientIP == nil {
 			pt.Log(pt.LogSeverityWarning, "unable to parse client IP address in X-Forwarded-For header")
 		}
