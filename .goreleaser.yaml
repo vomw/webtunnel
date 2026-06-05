@@ -1,0 +1,76 @@
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+
+builds:
+  - id: server
+    main: ./main/server
+    binary: webtunnel-server
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - arm64
+      - amd64
+      - "386"
+
+  - id: client
+    main: ./main/client
+    binary: webtunnel-client
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - arm64
+      - amd64
+      - "386"
+
+nfpms:
+  - id: webtunnel
+    package_name: webtunnel
+    ids:
+      - server
+      - client
+    maintainer: Tor Anti-censorship Team <anti-censorship-team@lists.torproject.org>
+    homepage: https://www.torproject.org/
+    license: BSD-3-Clause
+    description: pluggable transport for Tor mimicking encrypted web traffic (client and server)
+      
+      WebTunnel is a censorship-resistant pluggable transport designed to mimic
+
+      encrypted web traffic (HTTPS) inspired by HTTPT. It works by wrapping the
+
+      payload connection into a WebSocket-like HTTPS connection, appearing to
+
+      network observers as an ordinary HTTPS (WebSocket) connection.
+
+
+      This package provides binaries for webtunnel client and server.
+    section: network
+    contents:
+      # TODO: this would be nice to be compressed
+      - src: doc/*.1
+        dst: /usr/share/man/man1/
+    formats:
+      - deb
+    
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
