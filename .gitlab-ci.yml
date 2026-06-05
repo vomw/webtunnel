@@ -4,6 +4,8 @@ variables:
 stages:
   - test
   - build
+  - release
+  - release_upload_binary
   - container
 
 unit_test:
@@ -22,28 +24,64 @@ unit_test_arm64:
   tags:
     - arm64
 
-build_amd64_linux:
-  image: ${DOCKER_REGISTRY_URL}/golang:1.24-bookworm
+binary_build:
   stage: build
+  image:
+    name: ${DOCKER_REGISTRY_URL}/goreleaser/goreleaser
+    entrypoint: [""]
   variables:
-    GOARCH: amd64
-    GOOS: linux
-  tags:
-    - amd64
+    # Disable shallow cloning so that goreleaser can diff between tags to
+    # generate a changelog.
+    GIT_DEPTH: 0
+  script:
+    - |
+      if [ -z "$CI_COMMIT_TAG" ]
+      then
+        goreleaser release --snapshot --clean
+      else
+        goreleaser release --clean
+      fi
   artifacts:
+    name: "${CI_PROJECT_PATH}_${CI_JOB_STAGE}_${CI_JOB_ID}_${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHA}"
     paths:
-      - build/amd64-linux/
-  script: ./release/build.sh
+      - dist/
+    expire_in: 1 week
 
-build_arm64_linux:
-  extends: build_amd64_linux
-  stage: build
-  variables:
-    GOARCH: arm64
-    GOOS: linux
+release_job:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/cli:latest
+  allow_failure: true
+  rules:
+    - if: "$CI_COMMIT_TAG"
+    - when: never
   artifacts:
+    name: "${CI_PROJECT_PATH}_${CI_JOB_STAGE}_${CI_JOB_ID}_${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHA}"
     paths:
-      - build/arm64-linux/
+      - dist/
+    expire_in: 1 week
+  script:
+    - echo "Generating a release"
+  release:
+    tag_name: '$CI_COMMIT_TAG'
+    description: '$CI_COMMIT_TAG'
+
+release_upload_binary_job:
+  stage: release_upload_binary
+  image: registry.gitlab.com/gitlab-org/cli:latest
+  rules:
+    - if: "$CI_COMMIT_TAG"
+    - when: never
+  artifacts:
+    name: "${CI_PROJECT_PATH}_${CI_JOB_STAGE}_${CI_JOB_ID}_${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHA}"
+    paths:
+      - dist/
+    expire_in: 1 week
+  script:
+    - echo "Uploading everything"
+    - glab auth login --hostname "$CI_SERVER_HOST" --job-token "$CI_JOB_TOKEN"
+    - glab release upload --use-package-registry "$CI_COMMIT_TAG" dist/*.deb
+    - glab release upload --use-package-registry "$CI_COMMIT_TAG" dist/*.tar.gz
+    - glab release upload --use-package-registry "$CI_COMMIT_TAG" dist/*.txt
 
 build-server-container:
   stage: container
