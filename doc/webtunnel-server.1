@@ -1,0 +1,59 @@
+.TH WEBTUNNEL-SERVER "1" "AUG 2025" "webtunnel-server 0.0.2" "User Commands"
+.SH NAME
+webtunnel-server \- pluggable transport for Tor that mimic encrypted web traffic, server side component
+.SH DESCRIPTION
+
+WebTunnel is a censorship-resistant pluggable transport designed to mimic
+encrypted web traffic (HTTPS) inspired by HTTPT. It works by wrapping the
+payload connection into a WebSocket-like HTTPS connection, appearing to
+network observers as an ordinary HTTPS (WebSocket) connection.
+
+This is the server side component of WebTunnel, it allows you to create a
+censorship-resistant bridge behind a website, for providing access to the Tor network.
+
+.SH REQUIREMENTS
+.nf
+A static IPv4 (preferably);
+The ability to expose TCP ports to the Internet (make sure that NAT doesn't get in the way);
+A self-hosted website, including a configurable web server (such as NGINX or Apache) and a domain under your control;
+A valid TLS certificate;
+At least 1 GB of memory RAM (4 GB recommended) to support the Tor process and WebTunnel transport.
+
+.SH CONFIGURATION
+
+Add the following lines to your torrc located at /etc/tor/torrc and fill in your info:
+
+.nf
+BridgeRelay 1
+ORPort 127.0.0.1:auto
+AssumeReachable 1
+ServerTransportPlugin webtunnel exec /usr/local/bin/webtunnel-server
+ServerTransportListenAddr webtunnel 127.0.0.1:15000
+# Change the url here to your url with secret path
+ServerTransportOptions webtunnel url=https://yourdomain/path
+ExtORPort auto
+# Set your contact email address and bridge nickname
+ContactInfo <address@email.com>
+Nickname WebTunnelTest
+SocksPort 0
+
+Then refer to the following link for configuration of the webserver:
+https://community.torproject.org/relay/setup/webtunnel/
+
+Refer to the '6. Edit and reload AppArmor tor permission' section in the following document if you are using AppArmor:
+https://community.torproject.org/relay/setup/webtunnel/source/
+
+.SH BRIDGE DISTRIBUTION
+
+By default the bridge is distributed by Tor's web distributor (HTTPS), if you don't want your bridge to be distributed, set the BridgeDistribution option in torrc to anything other than HTTPS:
+
+.nf
+# do not distribute
+BridgeDistribution Private
+
+.SH "SEE ALSO"    
+.BR webtunnel-client (1)
+.BR tor (1)
+
+.SH "AUTHOR"
+This man page was written by Yifei Zhan <yifei@zhan.science> using documentations from https://community.torproject.org/relay/setup/webtunnel/source/

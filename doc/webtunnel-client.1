@@ -1,0 +1,47 @@
+.TH WEBTUNNEL-CLIENT "1" "AUG 2025" "webtunnel-client 0.0.2" "User Commands"
+.SH NAME
+webtunnel-client \- pluggable transport for Tor that mimic encrypted web traffic, client side component
+.SH DESCRIPTION
+
+WebTunnel is a censorship-resistant pluggable transport designed to mimic
+encrypted web traffic (HTTPS) inspired by HTTPT. It works by wrapping the
+payload connection into a WebSocket-like HTTPS connection, appearing to
+network observers as an ordinary HTTPS (WebSocket) connection.
+
+This is the client side component of WebTunnel, it allows you to connect to the Tor network
+via censorship-resistant bridges behind websites.
+
+.SH OBTAINING A WEBTUNNEL
+
+To obtain a webtunnel, open the following link from an uncensored connection:
+
+https://bridges.torproject.org/options
+
+Under 'Do you need a pluggable transport?', select webtunnel and click 'Get Bridges', you should get a few webtunnel bridgelines of the following format:
+
+webtunnel <placeholder-ip-address>:443 <fingerprint> url=https://<secret-domain-name>/<secret-location> ver=0.0.2
+
+Alternatively a trusted friend might be able to help you obtain a webtunnel bridge.
+
+.SH USAGE
+
+With one or more webtunnel bridge, edit your torrc configuration located at /etc/torrc and add the following lines to enable webtunnel:
+
+.nf
+
+ClientTransportPlugin webtunnel exec /usr/bin/webtunnel-client
+UseBridges 1
+# You can have multiple webtunnel bridges configured here...
+Bridge webtunnel <placeholder-ip-address>:443 <fingerprint> url=https://<secret-domain-name>/<secret-location> ver=0.0.2
+
+You should now be able to connect to Tor via webtunnel.
+
+.SH "SEE ALSO"    
+.BR tor (1)
+.BR nyx (1)
+
+.SH "AUTHOR"
+This man page was written by Yifei Zhan <yifei@zhan.science> with help the webtunnel documentations.
+.br
+Webtunnel is part of the Tor Project.
+
