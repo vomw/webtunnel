@@ -1,0 +1,15 @@
+Source: webtunnel
+Maintainer: Tor Anti-censorship Team <anti-censorship-team@lists.torproject.org>
+
+Package: webtunnel
+Section: net
+Priority: optional
+Architecture: any
+Homepage: https://www.torproject.org/
+Description: pluggable transport for Tor mimicking encrypted web traffic (client and server)
+ WebTunnel is a censorship-resistant pluggable transport designed to mimic
+ encrypted web traffic (HTTPS) inspired by HTTPT. It works by wrapping the
+ payload connection into a WebSocket-like HTTPS connection, appearing to
+ network observers as an ordinary HTTPS (WebSocket) connection.
+ .
+ This package provides binaries for webtunnel client and server.
