@@ -48,26 +48,24 @@ nfpms:
     maintainer: Tor Anti-censorship Team <anti-censorship-team@lists.torproject.org>
     homepage: https://www.torproject.org/
     license: BSD-3-Clause
-    description: pluggable transport for Tor mimicking encrypted web traffic (client and server)
-      
+    description: |
+      pluggable transport for Tor mimicking encrypted web traffic (client and server)
       WebTunnel is a censorship-resistant pluggable transport designed to mimic
-
       encrypted web traffic (HTTPS) inspired by HTTPT. It works by wrapping the
-
       payload connection into a WebSocket-like HTTPS connection, appearing to
-
       network observers as an ordinary HTTPS (WebSocket) connection.
-
-
+      .
       This package provides binaries for webtunnel client and server.
-    section: network
+    section: net
     contents:
       # TODO: this would be nice to be compressed
       - src: doc/*.1
         dst: /usr/share/man/man1/
     formats:
       - deb
-    
+    file_name_template: '{{ .PackageName }}_{{ .Version }}-1~torproject_{{ .Arch }}'
+    release: 1~torproject
+
 changelog:
   sort: asc
   filters:
