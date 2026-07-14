@@ -23,7 +23,6 @@ builds:
     goarch:
       - arm64
       - amd64
-      - "386"
 
   - id: client
     main: ./main/client
@@ -37,7 +36,6 @@ builds:
     goarch:
       - arm64
       - amd64
-      - "386"
 
 nfpms:
   - id: webtunnel
