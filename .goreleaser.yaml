@@ -23,6 +23,12 @@ builds:
     goarch:
       - arm64
       - amd64
+    flags:
+      - -trimpath
+    ldflags:
+      - -X main.date={{.CommitDate}}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
 
   - id: client
     main: ./main/client
@@ -36,6 +42,12 @@ builds:
     goarch:
       - arm64
       - amd64
+    flags:
+      - -trimpath
+    ldflags:
+      - -X main.date={{.CommitDate}}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
 
 nfpms:
   - id: webtunnel
@@ -63,6 +75,7 @@ nfpms:
       - deb
     file_name_template: '{{ .PackageName }}_{{ .Version }}-1~torproject_{{ .Arch }}'
     release: 1~torproject
+    mtime: "{{ .CommitDate }}"
 
 changelog:
   sort: asc
