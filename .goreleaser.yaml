@@ -73,9 +73,12 @@ nfpms:
         dst: /usr/share/man/man1/
     formats:
       - deb
-    file_name_template: '{{ .PackageName }}_{{ .Version }}-1~torproject_{{ .Arch }}'
-    release: 1~torproject
+    deb:
+      fields:
+        Source: webtunnel
     mtime: "{{ .CommitDate }}"
+    version_metadata: "tpo"
+    release: 1
 
 changelog:
   sort: asc
