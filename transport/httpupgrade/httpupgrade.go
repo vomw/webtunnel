@@ -54,7 +54,7 @@ func (t Transport) Client(conn net.Conn) (net.Conn, error) {
 	if resp.Status == "101 Switching Protocols" &&
 		strings.ToLower(resp.Header.Get("Upgrade")) == "websocket" &&
 		strings.ToLower(resp.Header.Get("Connection")) == "upgrade" {
-		return wrappedConn{Conn: conn, reader: connReader}, nil
+		return newWrappedConn(conn, connReader, nil), nil
 	}
 	return nil, errors.New("unrecognized reply")
 }
@@ -110,7 +110,15 @@ func (t Transport) Server(conn net.Conn) (net.Conn, error) {
 			Port: 60000,
 		}
 	}
-	return wrappedConn{Conn: conn, reader: connReader, remoteAddr: remoteAddr}, nil
+	return newWrappedConn(conn, connReader, remoteAddr), nil
+}
+
+func newWrappedConn(conn net.Conn, connReader *bufio.Reader, remoteAddr net.Addr) wrappedConn {
+	var reader io.Reader = conn
+	if connReader.Buffered() > 0 {
+		reader = connReader
+	}
+	return wrappedConn{Conn: conn, reader: reader, remoteAddr: remoteAddr}
 }
 
 type wrappedConn struct {

@@ -71,3 +71,27 @@ func assertPayload(t *testing.T, conn net.Conn) {
 		t.Fatalf("got %q, want %q", buf, payload)
 	}
 }
+
+func TestClientPayloadArrivingAfterHandshake(t *testing.T) {
+	var written bytes.Buffer
+	conn := fakeConn{
+		r: io.MultiReader(
+			strings.NewReader("HTTP/1.1 101 Switching Protocols\r\nConnection: upgrade\r\nUpgrade: websocket\r\n\r\n"),
+			strings.NewReader(payload),
+		),
+		w: &written,
+	}
+
+	transport, err := NewHTTPUpgradeTransport(&Config{Path: "test", Host: "example.com"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	upgraded, err := transport.Client(conn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if upgraded.(wrappedConn).reader != conn {
+		t.Error("handshake reader retained with an empty buffer")
+	}
+	assertPayload(t, upgraded)
+}
