@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -44,8 +45,8 @@ func (t Transport) Client(conn net.Conn) (net.Conn, error) {
 		return nil, err
 	}
 
-	//TODO The bufio usage here is unreliable
-	resp, err := http.ReadResponse(bufio.NewReader(conn), req)
+	connReader := bufio.NewReader(conn)
+	resp, err := http.ReadResponse(connReader, req)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +54,7 @@ func (t Transport) Client(conn net.Conn) (net.Conn, error) {
 	if resp.Status == "101 Switching Protocols" &&
 		strings.ToLower(resp.Header.Get("Upgrade")) == "websocket" &&
 		strings.ToLower(resp.Header.Get("Connection")) == "upgrade" {
-		return conn, nil
+		return newWrappedConn(conn, connReader, nil), nil
 	}
 	return nil, errors.New("unrecognized reply")
 }
@@ -109,15 +110,28 @@ func (t Transport) Server(conn net.Conn) (net.Conn, error) {
 			Port: 60000,
 		}
 	}
-	return &connWithAlternativeRemoteAddr{conn, remoteAddr}, nil
+	return newWrappedConn(conn, connReader, remoteAddr), nil
 }
 
-type connWithAlternativeRemoteAddr struct {
+func newWrappedConn(conn net.Conn, connReader *bufio.Reader, remoteAddr net.Addr) wrappedConn {
+	var reader io.Reader = conn
+	if connReader.Buffered() > 0 {
+		reader = connReader
+	}
+	return wrappedConn{Conn: conn, reader: reader, remoteAddr: remoteAddr}
+}
+
+type wrappedConn struct {
 	net.Conn
+	reader     io.Reader
 	remoteAddr net.Addr
 }
 
-func (c connWithAlternativeRemoteAddr) RemoteAddr() net.Addr {
+func (c wrappedConn) Read(p []byte) (int, error) {
+	return c.reader.Read(p)
+}
+
+func (c wrappedConn) RemoteAddr() net.Addr {
 	if c.remoteAddr != nil {
 		return c.remoteAddr
 	}
