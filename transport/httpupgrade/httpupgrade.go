@@ -2,6 +2,8 @@ package httpupgrade
 
 import (
 	"bufio"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
@@ -34,6 +36,13 @@ func (t Transport) Client(conn net.Conn) (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	key := make([]byte, 16)
+	if _, err := rand.Read(key); err != nil {
+		return nil, err
+	}
+	req.Header.Set("Sec-WebSocket-Key", base64.StdEncoding.EncodeToString(key))
+	req.Header.Set("Sec-WebSocket-Version", "13")
 
 	req.Header.Set("Connection", "upgrade")
 	req.Header.Set("Upgrade", "websocket")
@@ -77,8 +86,13 @@ func (t Transport) Server(conn net.Conn) (net.Conn, error) {
 		ProtoMinor: 1,
 		Header:     http.Header{},
 	}
+	accept := make([]byte, 16)
+	if _, err := rand.Read(accept); err != nil {
+		return nil, err
+	}
 	resp.Header.Set("Connection", "upgrade")
 	resp.Header.Set("Upgrade", "websocket")
+	resp.Header.Set("Sec-WebSocket-Accept", base64.StdEncoding.EncodeToString(accept))
 	err = resp.Write(conn)
 	if err != nil {
 		return nil, err
